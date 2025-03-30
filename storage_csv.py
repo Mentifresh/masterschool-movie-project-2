@@ -15,7 +15,13 @@ class StorageCsv(IStorage):
         Args:
             file_path (str): Path to the CSV file for storing movies data.
         """
-        self._file_path = file_path
+        # Ensure data directory exists
+        self._data_dir = os.path.join(os.path.dirname(__file__), "data")
+        os.makedirs(self._data_dir, exist_ok=True)
+        
+        # Create full path to the CSV file in the data directory
+        self._file_path = os.path.join(self._data_dir, file_path)
+        
         # Ensure the file exists with headers
         if not os.path.exists(self._file_path):
             with open(self._file_path, 'w', newline='') as file:

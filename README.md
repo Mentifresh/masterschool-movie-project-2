@@ -12,10 +12,6 @@ A Python application to manage your movie collection with data from OMDb API.
 ## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/movie-collection-manager.git
-cd movie-collection-manager
-
 # Install dependencies
 pip install -r requirements.txt
 ```
@@ -25,6 +21,8 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+
+All data files are stored in the `data/` directory, which is automatically created when the application runs.
 
 ## Environment Variables
 

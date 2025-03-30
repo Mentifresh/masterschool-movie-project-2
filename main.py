@@ -12,8 +12,8 @@ def main():
     Main function that initializes the movie application with JSON storage and runs it.
     """
     try:
-        # Initialize storage with JSON file path
-        storage = StorageJson("data.json")
+        # Initialize storage with JSON file path (stored in the data directory)
+        storage = StorageJson("movies.json")
         
         # Create and run the movie application
         movie_app = MovieApp(storage)
