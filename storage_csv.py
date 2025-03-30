@@ -20,7 +20,7 @@ class StorageCsv(IStorage):
         if not os.path.exists(self._file_path):
             with open(self._file_path, 'w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(["title", "year", "rating"])
+                writer.writerow(["title", "year", "rating", "poster"])
 
     def list_movies(self):
         """
@@ -35,15 +35,18 @@ class StorageCsv(IStorage):
                 reader = csv.DictReader(file)
                 for row in reader:
                     title = row['title']
-                    movies[title] = {
+                    movie_data = {
                         'year': int(row['year']),
                         'rating': float(row['rating'])
                     }
+                    if 'poster' in row and row['poster']:
+                        movie_data['poster'] = row['poster']
+                    movies[title] = movie_data
             return movies
         except (FileNotFoundError, csv.Error):
             return {}
 
-    def add_movie(self, title, year, rating):
+    def add_movie(self, title, year, rating, poster=None):
         """
         Adds a movie to the CSV file.
         
@@ -51,9 +54,13 @@ class StorageCsv(IStorage):
             title (str): The title of the movie.
             year (int): The release year of the movie.
             rating (float): The rating of the movie.
+            poster (str, optional): URL to the movie poster image.
         """
         movies = self.list_movies()
-        movies[title] = {"year": year, "rating": rating}
+        movie_data = {"year": year, "rating": rating}
+        if poster:
+            movie_data["poster"] = poster
+        movies[title] = movie_data
         self._save_movies(movies)
 
     def delete_movie(self, title):
@@ -89,7 +96,14 @@ class StorageCsv(IStorage):
             movies (dict): A dictionary of movie information.
         """
         with open(self._file_path, 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(["title", "year", "rating"])
+            fieldnames = ["title", "year", "rating", "poster"]
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
             for title, details in movies.items():
-                writer.writerow([title, details["year"], details["rating"]]) 
+                row = {
+                    "title": title,
+                    "year": details["year"],
+                    "rating": details["rating"],
+                    "poster": details.get("poster", "")
+                }
+                writer.writerow(row) 

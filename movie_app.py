@@ -1,4 +1,7 @@
 import random
+import requests
+import os
+from dotenv import load_dotenv
 from istorage import IStorage
 
 
@@ -16,6 +19,9 @@ class MovieApp:
             storage (IStorage): An implementation of the IStorage interface.
         """
         self._storage = storage
+        # Load environment variables from .env file
+        load_dotenv()
+        self._api_key = os.getenv('API_KEY')
 
     def _command_list_movies(self):
         """
@@ -34,7 +40,8 @@ class MovieApp:
 
     def _command_add_movie(self):
         """
-        Adds a new movie to the database.
+        Adds a new movie to the database by fetching information from OMDb API.
+        User only needs to enter the movie title.
         """
         title = input("Enter new movie name: ").strip()
         if not title:
@@ -46,24 +53,86 @@ class MovieApp:
             print(f"Movie '{title}' already exists!")
             return
 
+        # Fetch movie information from OMDb API
         try:
-            year = int(input("Enter release year: "))
-        except ValueError:
-            print("Error: Invalid input for year.")
-            return
+            movie_data = self._fetch_movie_from_api(title)
+            
+            if not movie_data:
+                print(f"Movie '{title}' not found in OMDb database.")
+                return
+                
+            # Extract movie details from API response
+            api_title = movie_data.get('Title', title)
+            
+            # Handle the year data - it might be just a year or have additional info
+            year_str = movie_data.get('Year', '0')
+            # Extract just the digits from the beginning
+            year = 0
+            for i in range(len(year_str)):
+                if year_str[i].isdigit():
+                    year = int(year_str[0:i+1])
+                else:
+                    break
+            if year == 0:
+                year = 2000  # Default value if year can't be parsed
+            
+            # Handle the rating
+            imdb_rating = movie_data.get('imdbRating', 'N/A')
+            rating = 0.0
+            if imdb_rating != 'N/A':
+                try:
+                    rating = float(imdb_rating)
+                except ValueError:
+                    # If we can't convert to float, use default
+                    rating = 0.0
+            
+            # Get poster URL
+            poster = None
+            if 'Poster' in movie_data and movie_data['Poster'] != 'N/A':
+                poster = movie_data['Poster']
+            
+            # Add movie to storage
+            self._storage.add_movie(api_title, year, rating, poster)
+            print(f"Movie '{api_title}' successfully added with data from OMDb API.")
+            
+        except requests.exceptions.ConnectionError:
+            print("Error: Could not connect to OMDb API. Please check your internet connection.")
+        except requests.exceptions.Timeout:
+            print("Error: Request to OMDb API timed out. Please try again later.")
+        except requests.exceptions.RequestException as e:
+            print(f"Error: An error occurred when accessing OMDb API: {str(e)}")
+        except Exception as e:
+            print(f"Error: An unexpected error occurred: {str(e)}")
+            # Print more detailed debug information
+            import traceback
+            traceback.print_exc()
 
-        try:
-            rating = float(input("Enter rating (0-10): "))
-        except ValueError:
-            print("Error: Invalid input for rating.")
-            return
-
-        if not 0 <= rating <= 10:
-            print("Error: Rating must be between 0 and 10.")
-            return
-
-        self._storage.add_movie(title, year, rating)
-        print(f"Movie '{title}' successfully added")
+    def _fetch_movie_from_api(self, title):
+        """
+        Fetches movie information from OMDb API.
+        
+        Args:
+            title (str): The title of the movie to search for.
+            
+        Returns:
+            dict: Movie data if found, None otherwise.
+        
+        Raises:
+            requests.exceptions.RequestException: If an error occurs during the API request.
+        """
+        if not self._api_key:
+            raise ValueError("API key is missing. Please check your .env file.")
+            
+        url = f"http://www.omdbapi.com/?apikey={self._api_key}&t={title}"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()  # Raise exception for HTTP errors
+        
+        data = response.json()
+        
+        if data.get('Response') == 'False':
+            return None
+            
+        return data
 
     def _command_delete_movie(self):
         """
@@ -147,6 +216,10 @@ class MovieApp:
             
         title, details = random.choice(list(movies.items()))
         print(f"\nTonight you will watch: {title} ({details['year']}) - Rating: {details['rating']}\n")
+        
+        # Show poster URL if available
+        if 'poster' in details and details['poster']:
+            print(f"Poster: {details['poster']}\n")
 
     def _command_search_movies(self):
         """
@@ -161,6 +234,8 @@ class MovieApp:
             print("\nFound movies:")
             for title, details in found_movies.items():
                 print(f"{title} ({details['year']}): {details['rating']}")
+                if 'poster' in details and details['poster']:
+                    print(f"Poster: {details['poster']}")
             print("\n")
         else:
             print("\nNo movies found.\n")

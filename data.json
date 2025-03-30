@@ -1,10 +1,11 @@
 {
-    "Test movie": {
-        "year": 2023,
-        "rating": 4.0
-    },
-    "Test 2": {
-        "year": 2025,
-        "rating": 9.0
-    }
+  "Terminator": {
+    "year": 1991,
+    "rating": 6.1
+  },
+  "Pulp Fiction": {
+    "year": 1994,
+    "rating": 8.9,
+    "poster": "https://m.media-amazon.com/images/M/MV5BYTViYTE3ZGQtNDBlMC00ZTAyLTkyODMtZGRiZDg0MjA2YThkXkEyXkFqcGc@._V1_SX300.jpg"
+  }
 }
