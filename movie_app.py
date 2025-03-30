@@ -124,7 +124,10 @@ class MovieApp:
         if not self._api_key:
             raise ValueError("API key is missing. Please check your .env file.")
             
-        url = f"http://www.omdbapi.com/?apikey={self._api_key}&t={title}"
+        # URL encode the movie title to handle spaces and special characters
+        encoded_title = requests.utils.quote(title)
+        url = f"http://www.omdbapi.com/?apikey={self._api_key}&t={encoded_title}"
+        
         response = requests.get(url, timeout=10)
         response.raise_for_status()  # Raise exception for HTTP errors
         
@@ -305,15 +308,31 @@ class MovieApp:
             html_content = html_content.replace("__TEMPLATE_YEAR__", str(current_year))
             
             # Write the final HTML to a file
-            with open("index.html", "w") as f:
+            output_file = "index.html"
+            with open(output_file, "w") as f:
                 f.write(html_content)
-                
-            print("\nWebsite generated successfully! Open 'index.html' to view your movie collection.")
+            
+            # Get the absolute path to the HTML file to display to the user
+            abs_path = os.path.abspath(output_file)
+            
+            print("\nWebsite generated successfully!")
+            print(f"Your collection with {len(movies)} movies is now available at: {abs_path}")
+            
+            # Ask if the user wants to open the website in the browser
+            if input("Would you like to open it in your browser? (y/n): ").lower() == 'y':
+                try:
+                    import webbrowser
+                    webbrowser.open('file://' + abs_path)
+                    print("Website opened in your browser.")
+                except Exception as e:
+                    print(f"Could not open browser: {str(e)}")
             
         except FileNotFoundError as e:
             print(f"Error: Template file not found. {str(e)}")
         except Exception as e:
             print(f"Error generating website: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
     def run(self):
         """
