@@ -1,6 +1,7 @@
 import random
 import requests
 import os
+import datetime
 from dotenv import load_dotenv
 from istorage import IStorage
 
@@ -256,6 +257,63 @@ class MovieApp:
         for rating, title in movie_list:
             print(f"{title}: {rating}")
         print("\n")
+        
+    def _command_generate_website(self):
+        """
+        Generates an HTML website to display the movie collection.
+        """
+        movies = self._storage.list_movies()
+        
+        if not movies:
+            print("No movies in the database. Website not generated.")
+            return
+            
+        try:
+            # Read the template files
+            with open("index-template.html", "r") as f:
+                template = f.read()
+                
+            with open("movie-card-template.html", "r") as f:
+                movie_card_template = f.read()
+                
+            # Generate movie grid HTML
+            movie_grid = ""
+            for title, details in movies.items():
+                # Create a copy of the movie card template for each movie
+                movie_card = movie_card_template
+                
+                # Replace placeholders with actual movie data
+                movie_card = movie_card.replace("__TEMPLATE_MOVIE_TITLE__", title)
+                movie_card = movie_card.replace("__TEMPLATE_MOVIE_YEAR__", str(details['year']))
+                movie_card = movie_card.replace("__TEMPLATE_MOVIE_RATING__", f"{details['rating']:.1f}/10")
+                
+                # Handle poster image
+                if 'poster' in details and details['poster']:
+                    poster_html = f'<img src="{details["poster"]}" alt="{title}" class="object-cover w-full h-full">'
+                else:
+                    poster_html = '<div class="flex items-center justify-center h-full text-gray-400">No poster available</div>'
+                
+                movie_card = movie_card.replace("__TEMPLATE_MOVIE_POSTER__", poster_html)
+                
+                # Add the movie card to the grid
+                movie_grid += movie_card
+                
+            # Replace placeholders in the main template
+            current_year = datetime.datetime.now().year
+            html_content = template.replace("__TEMPLATE_TITLE__", "My Movie Collection")
+            html_content = html_content.replace("__TEMPLATE_MOVIE_GRID__", movie_grid)
+            html_content = html_content.replace("__TEMPLATE_YEAR__", str(current_year))
+            
+            # Write the final HTML to a file
+            with open("index.html", "w") as f:
+                f.write(html_content)
+                
+            print("\nWebsite generated successfully! Open 'index.html' to view your movie collection.")
+            
+        except FileNotFoundError as e:
+            print(f"Error: Template file not found. {str(e)}")
+        except Exception as e:
+            print(f"Error generating website: {str(e)}")
 
     def run(self):
         """
@@ -273,8 +331,9 @@ class MovieApp:
             print("6. Random movie")
             print("7. Search movie")
             print("8. Movies sorted by rating")
+            print("9. Generate website")
 
-            choice = input("Enter choice (0-8): ")
+            choice = input("Enter choice (0-9): ")
 
             if choice == '0':
                 print("Bye!")
@@ -295,5 +354,7 @@ class MovieApp:
                 self._command_search_movies()
             elif choice == '8':
                 self._command_movies_by_rating()
+            elif choice == '9':
+                self._command_generate_website()
             else:
                 print("\nInvalid choice. Please try again.")

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Movie Collection</title>
+    <!-- Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+    <header class="bg-blue-600 shadow-md py-6">
+      <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold text-white text-center">
+          __TEMPLATE_TITLE__
+        </h1>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+      >
+        __TEMPLATE_MOVIE_GRID__
+      </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center py-4 mt-8">
+      <p>Movie Collection App &copy; __TEMPLATE_YEAR__</p>
+    </footer>
+  </body>
+</html>
